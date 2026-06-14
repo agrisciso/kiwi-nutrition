@@ -426,7 +426,7 @@ function NutritionCalculator({ t, lang, setLang }) {
               <div style={{ fontSize:18, fontWeight:800, color:C.cream, lineHeight:1.2 }}>{t.appTitle}</div>
             </div>
           </div>
-          <button onClick={async () => { await signOut(); setSession(null); }} style={{
+          <button onClick={async () => { await signOut(); window.location.reload(); }} style={{
             padding:"5px 12px", borderRadius:20,
             border:`1px solid ${C.gold}55`, background:"transparent",
             color:C.gold, fontSize:11, fontWeight:600, cursor:"pointer",
