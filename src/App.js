@@ -39,7 +39,7 @@ function calcNutrition({ ha, yieldTon: y, treeAge, pOlsen, kSoil, mgSoil, caSoil
 const LANGS = {
   el: {
     code:"el", flag:"🇬🇷", label:"ΕΛ",
-    appTitle:"Υπολογιστής Θρέψης Ακτινιδίου", brand:"AgriSci Solutions",
+    appTitle:"Μοντέλο Θρέψης Ακτινιδίου", brand:"AgriSci Solutions",
     fieldSection:"🌿 Στοιχεία Χωραφιού", soilSection:"🪨 Ανάλυση Εδάφους (0-30 cm)",
     waterSection:"💧 Ανάλυση Νερού", resultsSection:"📋 Πρόγραμμα Θρέψης",
     hectares:"Εκτάρια", yieldLabel:"Εκτίμηση Παραγωγής", ageLabel:"Ηλικία Δένδρων",
@@ -63,7 +63,7 @@ const LANGS = {
   },
   en: {
     code:"en", flag:"🇬🇧", label:"EN",
-    appTitle:"Kiwifruit Nutrition Calculator", brand:"AgriSci Solutions",
+    appTitle:"Kiwifruit Nutrition Model", brand:"AgriSci Solutions",
     fieldSection:"🌿 Field Data", soilSection:"🪨 Soil Analysis (0-30 cm)",
     waterSection:"💧 Water Analysis", resultsSection:"📋 Nutrition Programme",
     hectares:"Hectares", yieldLabel:"Estimated Yield", ageLabel:"Tree Age",
@@ -86,7 +86,7 @@ const LANGS = {
   },
   it: {
     code:"it", flag:"🇮🇹", label:"IT",
-    appTitle:"Calcolatore Nutrizione Actinidia", brand:"AgriSci Solutions",
+    appTitle:"Modello Nutrizione Actinidia", brand:"AgriSci Solutions",
     fieldSection:"🌿 Dati Campo", soilSection:"🪨 Analisi Suolo (0-30 cm)",
     waterSection:"💧 Analisi Acqua", resultsSection:"📋 Piano Nutrizionale",
     hectares:"Ettari", yieldLabel:"Produzione Stimata", ageLabel:"Età Piante",
@@ -109,7 +109,7 @@ const LANGS = {
   },
   es: {
     code:"es", flag:"🇪🇸", label:"ES",
-    appTitle:"Calculadora de Nutrición Kiwi", brand:"AgriSci Solutions",
+    appTitle:"Modelo de Nutrición Kiwi", brand:"AgriSci Solutions",
     fieldSection:"🌿 Datos del Campo", soilSection:"🪨 Análisis de Suelo (0-30 cm)",
     waterSection:"💧 Análisis de Agua", resultsSection:"📋 Programa de Nutrición",
     hectares:"Hectáreas", yieldLabel:"Producción Estimada", ageLabel:"Edad Árboles",
@@ -277,10 +277,16 @@ function ResultRow({ element, amount, period, t }) {
 // ─── Main App ─────────────────────────────────────────────────────────────────
 export default function App() {
   const [lang, setLang] = useState("el");
-  const [unlocked, setUnlocked] = useState(false);
+  const [unlocked, setUnlocked] = useState(() => {
+    try { return localStorage.getItem("agrisci_pw") === "agrisci2024"; } catch { return false; }
+  });
   const t = LANGS[lang];
 
-  if (!unlocked) return <PasswordGate onUnlock={() => setUnlocked(true)} t={t} lang={lang} setLang={setLang} />;
+  function doUnlock() {
+    try { localStorage.setItem("agrisci_pw", "agrisci2024"); } catch {}
+    setUnlocked(true);
+  }
+  if (!unlocked) return <PasswordGate onUnlock={doUnlock} t={t} lang={lang} setLang={setLang} />;
   return <NutritionCalculator t={t} lang={lang} setLang={setLang} />;
 }
 
