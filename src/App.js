@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const C = {
   darkGreen: "#0D2818", midGreen: "#1A3A2A", accent: "#2D5A3D",
