@@ -9,8 +9,7 @@ const C = {
   orange: "#E67E22", ok: "#27AE60", red: "#C0392B",
 };
 
-// ─── Password ────────────────────────────────────────────────────────────────
-const PASSWORD = "agrisci2024";
+// ─── Auth via Supabase ───────────────────────────────────────────────────────
 
 // ─── Soil texture thresholds (Xiloyannis et al.) ─────────────────────────────
 const SOIL_TEXTURES = {
