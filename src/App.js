@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { supabase, signOut } from "./agrisci-auth";
+import LoginGate from "./LoginGate";
 
 const C = {
   darkGreen: "#0D2818", midGreen: "#1A3A2A", accent: "#2D5A3D",
@@ -312,16 +314,39 @@ function ResultRow({ element, amount, period, t }) {
 // ─── Main App ─────────────────────────────────────────────────────────────────
 export default function App() {
   const [lang, setLang] = useState("el");
-  const [unlocked, setUnlocked] = useState(() => {
-    try { return localStorage.getItem("agrisci_pw") === "agrisci2024"; } catch { return false; }
-  });
+  const [session, setSession] = useState(null);
+  const [loadingAuth, setLoadingAuth] = useState(true);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setLoadingAuth(false);
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
   const t = LANGS[lang];
 
-  function doUnlock() {
-    try { localStorage.setItem("agrisci_pw", "agrisci2024"); } catch {}
-    setUnlocked(true);
+  if (loadingAuth) {
+    return (
+      <div style={{ minHeight:"100vh", background:"#0D2818", display:"flex", alignItems:"center", justifyContent:"center" }}>
+        <div style={{ color:"#C9A84C", fontSize:14, fontWeight:600 }}>...</div>
+      </div>
+    );
   }
-  if (!unlocked) return <PasswordGate onUnlock={doUnlock} t={t} lang={lang} setLang={setLang} />;
+  if (!session) {
+    return (
+      <LoginGate
+        onLogin={setSession}
+        appTitle={t.appTitle}
+        appIcon={<NutritionIcon size={56}/>}
+        lang={lang}
+        setLang={setLang}
+      />
+    );
+  }
   return <NutritionCalculator t={t} lang={lang} setLang={setLang} />;
 }
 
@@ -393,12 +418,21 @@ function NutritionCalculator({ t, lang, setLang }) {
               </button>
             ))}
           </div>
+          <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", width:"100%" }}>
           <div style={{ display:"flex", alignItems:"center", gap:12 }}>
             <div style={{ background:C.midGreen, borderRadius:14, padding:6 }}><NutritionIcon size={38}/></div>
             <div>
               <div style={{ fontSize:11, color:C.gold, fontWeight:700, letterSpacing:"0.15em", textTransform:"uppercase" }}>{t.brand}</div>
               <div style={{ fontSize:18, fontWeight:800, color:C.cream, lineHeight:1.2 }}>{t.appTitle}</div>
             </div>
+          </div>
+          <button onClick={async () => { await signOut(); setSession(null); }} style={{
+            padding:"5px 12px", borderRadius:20,
+            border:`1px solid ${C.gold}55`, background:"transparent",
+            color:C.gold, fontSize:11, fontWeight:600, cursor:"pointer",
+          }}>
+            {lang==="el"?"Έξοδος":lang==="en"?"Sign out":lang==="it"?"Esci":"Salir"}
+          </button>
           </div>
         </div>
       </div>
