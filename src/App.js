@@ -136,7 +136,7 @@ function fmt(v) { return v < 0.01 ? "0" : v.toFixed(1); }
 
 // ─── Password Gate ────────────────────────────────────────────────────────────
 function PasswordGate({ onUnlock, t, lang, setLang }) {
-  const [pw, setPw] = useState("");
+  const [pw, setPw] = useState(() => loadNutriSaved("yieldTon", ""));
   const [error, setError] = useState(false);
   const [shake, setShake] = useState(false);
 
@@ -290,23 +290,46 @@ export default function App() {
   return <NutritionCalculator t={t} lang={lang} setLang={setLang} />;
 }
 
+
+// ─── Persist inputs to localStorage ─────────────────────────────────────────
+const NUTRI_STORAGE_KEY = 'agrisci_nutrition_inputs';
+
+function loadNutriSaved(key, defaultVal) {
+  try {
+    const s = localStorage.getItem(NUTRI_STORAGE_KEY);
+    if (!s) return defaultVal;
+    const d = JSON.parse(s);
+    return key in d ? d[key] : defaultVal;
+  } catch { return defaultVal; }
+}
+
+function saveNutriInputs(data) {
+  try { localStorage.setItem(NUTRI_STORAGE_KEY, JSON.stringify(data)); } catch {}
+}
+
 function NutritionCalculator({ t, lang, setLang }) {
-  const [ha,       setHa]      = useState(1.65);
+  const [ha,       setHa]      = useState(() => parseFloat(loadNutriSaved("ha", 1.65)) || 1.65);
   const [yieldTon, setYield]   = useState("");
-  const [treeAge,  setTreeAge] = useState(10);
-  const [pOlsen,   setPOlsen]  = useState(15);
-  const [kSoil,    setKSoil]   = useState(250);
-  const [mgSoil,   setMgSoil]  = useState(250);
-  const [caSoil,   setCaSoil]  = useState(3000);
-  const [pWater,   setPWater]  = useState(0.8);
-  const [kWater,   setKWater]  = useState(1.2);
-  const [mgWater,  setMgWater] = useState(1.2);
-  const [caWater,  setCaWater] = useState(53);
-  const [nWater,   setNWater]  = useState(5.9);
+  const [treeAge,  setTreeAge] = useState(() => (parseInt(loadNutriSaved("treeAge", 10)) || 10));
+  const [pOlsen,   setPOlsen]  = useState(() => (parseInt(loadNutriSaved("pOlsen", 15)) || 15));
+  const [kSoil,    setKSoil]   = useState(() => (parseInt(loadNutriSaved("kSoil", 250)) || 250));
+  const [mgSoil,   setMgSoil]  = useState(() => (parseInt(loadNutriSaved("mgSoil", 250)) || 250));
+  const [caSoil,   setCaSoil]  = useState(() => (parseInt(loadNutriSaved("caSoil", 3000)) || 3000));
+  const [pWater,   setPWater]  = useState(() => parseFloat(loadNutriSaved("pWater", 0.8)) || 0.8);
+  const [kWater,   setKWater]  = useState(() => parseFloat(loadNutriSaved("kWater", 1.2)) || 1.2);
+  const [mgWater,  setMgWater] = useState(() => parseFloat(loadNutriSaved("mgWater", 1.2)) || 1.2);
+  const [caWater,  setCaWater] = useState(() => (parseInt(loadNutriSaved("caWater", 53)) || 53));
+  const [nWater,   setNWater]  = useState(() => parseFloat(loadNutriSaved("nWater", 5.9)) || 5.9);
   const [results,  setResults] = useState(null);
   const [calculated, setCalc]  = useState(false);
 
+  // Save inputs whenever they change
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const hasYield = yieldTon !== "" && Number(yieldTon) > 0;
+
+  useEffect(() => {
+    saveNutriInputs({ ha, yieldTon, treeAge, pOlsen, kSoil, mgSoil, caSoil, pWater, kWater, mgWater, caWater, nWater });
+  }, [ha, yieldTon, treeAge, pOlsen, kSoil, mgSoil, caSoil, pWater, kWater, mgWater, caWater, nWater]); // eslint-disable-line react-hooks/exhaustive-deps
   const dirty = (fn) => (v) => { fn(v); setCalc(false); };
 
   function calculate() {
