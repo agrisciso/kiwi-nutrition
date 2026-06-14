@@ -1,0 +1,15 @@
+{
+  "short_name": "Θρέψη Kiwi",
+  "name": "AgriSci Nutrition Calculator",
+  "description": "Kiwifruit Nutrition Programme Calculator by AgriSci Solutions",
+  "icons": [
+    { "src": "/icons/icon-192x192.png", "type": "image/png", "sizes": "192x192", "purpose": "any maskable" },
+    { "src": "/icons/icon-512x512.png", "type": "image/png", "sizes": "512x512", "purpose": "any maskable" },
+    { "src": "/icons/icon-180x180.png", "type": "image/png", "sizes": "180x180", "purpose": "any" }
+  ],
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0D2818",
+  "theme_color": "#0D2818"
+}
