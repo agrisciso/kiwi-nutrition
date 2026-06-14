@@ -10,28 +10,47 @@ const C = {
 // ─── Password ────────────────────────────────────────────────────────────────
 const PASSWORD = "agrisci2024";
 
+// ─── Soil texture thresholds (Xiloyannis et al.) ─────────────────────────────
+const SOIL_TEXTURES = {
+  sandy:  { P_low:7,  P_high:11, K_low:70,  K_high:120, Ca_low:800,  Ca_high:1500, Mg_low:70,  Mg_high:120 },
+  medium: { P_low:9,  P_high:17, K_low:100, K_high:200, Ca_low:1500, Ca_high:3500, Mg_low:100, Mg_high:150 },
+  clay:   { P_low:11, P_high:21, K_low:150, K_high:300, Ca_low:3000, Ca_high:6000, Mg_low:150, Mg_high:300 },
+};
+
 // ─── EXACT Excel formulas ────────────────────────────────────────────────────
-function calcNutrition({ ha, yieldTon: y, treeAge, pOlsen, kSoil, mgSoil, caSoil, pWater, kWater, mgWater, caWater, nWater }) {
+function calcNutrition({ ha, yieldTon: y, treeAge, soilTexture = "medium", pOlsen, kSoil, mgSoil, caSoil, pWater, kWater, mgWater, caWater, nWater }) {
   const irr = ha * 4000;
+  const thr = SOIL_TEXTURES[soilTexture] || SOIL_TEXTURES.medium;
+
+  // P — threshold depends on soil texture
   let P;
-  if (pOlsen > 21)      P = 0;
-  else if (pOlsen < 11) P = Math.max((y * 10) / 37.5, 0);
-  else                  P = Math.max(((y * 10) / 37.5 - (pWater * irr) / 1000) * ha, 0);
+  if (pOlsen > thr.P_high)      P = 0;
+  else if (pOlsen < thr.P_low)  P = Math.max((y * 10) / 37.5, 0);
+  else                           P = Math.max(((y * 10) / 37.5 - (pWater * irr) / 1000) * ha, 0);
+
+  // K
   let K;
-  if (kSoil > 300)      K = 0;
-  else if (kSoil < 200) K = Math.max((y * 74) / 37.5, 0);
-  else                  K = Math.max(((y * 74) / 37.5 - (kWater * irr) / 1000) * ha, 0);
+  if (kSoil > thr.K_high)      K = 0;
+  else if (kSoil < thr.K_low)  K = Math.max((y * 74) / 37.5, 0);
+  else                          K = Math.max(((y * 74) / 37.5 - (kWater * irr) / 1000) * ha, 0);
+
+  // Ca
   let Ca;
-  if (caSoil > 6000)      Ca = 0;
-  else if (caSoil < 3500) Ca = (40 * 11) / 37.5;
-  else                    Ca = Math.max(((y * 11) / 37.5 - (caWater * irr) / 1000) * ha, 0);
+  if (caSoil > thr.Ca_high)      Ca = 0;
+  else if (caSoil < thr.Ca_low)  Ca = (40 * 11) / 37.5;
+  else                            Ca = Math.max(((y * 11) / 37.5 - (caWater * irr) / 1000) * ha, 0);
+
+  // Mg
   let Mg;
-  if (mgSoil > 300)      Mg = 0;
-  else if (mgSoil < 200) Mg = Math.max((y * 5) / 37.5, 0);
-  else                   Mg = Math.max(((y * 5) / 37.5 - (mgWater * irr) / 1000) * ha, 0);
+  if (mgSoil > thr.Mg_high)      Mg = 0;
+  else if (mgSoil < thr.Mg_low)  Mg = Math.max((y * 5) / 37.5, 0);
+  else                            Mg = Math.max(((y * 5) / 37.5 - (mgWater * irr) / 1000) * ha, 0);
+
+  // N
   let N;
   if (treeAge < 4) N = ((25 * 120) / 37.5 - (nWater * irr) / 1000) * ha;
   else             N = Math.max(((y * 120) / 37.5 - (nWater * irr) / 1000) * ha, 0);
+
   return { N, K, P, Ca, Mg };
 }
 
@@ -55,6 +74,10 @@ const LANGS = {
     periodP:"1-2 εφαρμογές: έκπτυξη → ανθοφορία",
     footerCTA:"Για προσωπική αξιολόγηση:", footerLink:"Επικοινωνήστε μαζί μας",
     // password gate
+    textureLabel: "Τύπος Εδάφους",
+    textureSandy: "Αμμώδες",
+    textureMedium: "Μέσης Σύστασης",
+    textureClay: "Αργιλώδες",
     pwTitle:"Πρόσβαση στον Υπολογιστή Θρέψης",
     pwSubtitle:"Εισάγετε τον κωδικό πρόσβασης",
     pwPlaceholder:"Κωδικός πρόσβασης",
@@ -78,6 +101,10 @@ const LANGS = {
     periodMg:"2-3 applications: 15 June → 1 July",
     periodP:"1-2 applications: budbreak → flowering",
     footerCTA:"For personalised assessment:", footerLink:"Contact us",
+    textureLabel:"Soil Texture",
+    textureSandy:"Sandy",
+    textureMedium:"Medium",
+    textureClay:"Clay",
     pwTitle:"Nutrition Calculator Access",
     pwSubtitle:"Enter your access password",
     pwPlaceholder:"Password",
@@ -101,6 +128,10 @@ const LANGS = {
     periodMg:"2-3 applicazioni: 15 giugno → 1 luglio",
     periodP:"1-2 applicazioni: ripresa vegetativa → fioritura",
     footerCTA:"Per una valutazione personalizzata:", footerLink:"Contattaci",
+    textureLabel:"Tessitura del Suolo",
+    textureSandy:"Sabbioso",
+    textureMedium:"Medio",
+    textureClay:"Argilloso",
     pwTitle:"Accesso al Calcolatore",
     pwSubtitle:"Inserire la password di accesso",
     pwPlaceholder:"Password",
@@ -124,6 +155,10 @@ const LANGS = {
     periodMg:"2-3 aplicaciones: 15 junio → 1 julio",
     periodP:"1-2 aplicaciones: brotación → floración",
     footerCTA:"Para evaluación personalizada:", footerLink:"Contáctenos",
+    textureLabel:"Textura del Suelo",
+    textureSandy:"Arenoso",
+    textureMedium:"Medio",
+    textureClay:"Arcilloso",
     pwTitle:"Acceso a la Calculadora",
     pwSubtitle:"Introduzca su contraseña de acceso",
     pwPlaceholder:"Contraseña",
@@ -308,6 +343,7 @@ function saveNutriInputs(data) {
 }
 
 function NutritionCalculator({ t, lang, setLang }) {
+  const [soilTexture, setSoilTexture] = useState(() => loadNutriSaved("soilTexture", "medium"));
   const [ha,       setHa]      = useState(() => parseFloat(loadNutriSaved("ha", 1.65)) || 1.65);
   const [yieldTon, setYield]   = useState("");
   const [treeAge,  setTreeAge] = useState(() => (parseInt(loadNutriSaved("treeAge", 10)) || 10));
@@ -328,20 +364,22 @@ function NutritionCalculator({ t, lang, setLang }) {
   const hasYield = yieldTon !== "" && Number(yieldTon) > 0;
 
   useEffect(() => {
-    saveNutriInputs({ ha, yieldTon, treeAge, pOlsen, kSoil, mgSoil, caSoil, pWater, kWater, mgWater, caWater, nWater });
-  }, [ha, yieldTon, treeAge, pOlsen, kSoil, mgSoil, caSoil, pWater, kWater, mgWater, caWater, nWater]); // eslint-disable-line react-hooks/exhaustive-deps
+    saveNutriInputs({ ha, yieldTon, treeAge, soilTexture, pOlsen, kSoil, mgSoil, caSoil, pWater, kWater, mgWater, caWater, nWater });
+  }, [ha, yieldTon, treeAge, soilTexture, pOlsen, kSoil, mgSoil, caSoil, pWater, kWater, mgWater, caWater, nWater]); // eslint-disable-line react-hooks/exhaustive-deps
   const dirty = (fn) => (v) => { fn(v); setCalc(false); };
+  function setTexture(v) { setSoilTexture(v); setCalc(false); }
 
   function calculate() {
     if (!hasYield) return;
-    setResults(calcNutrition({ ha, yieldTon:Number(yieldTon), treeAge, pOlsen, kSoil, mgSoil, caSoil, pWater, kWater, mgWater, caWater, nWater }));
+    setResults(calcNutrition({ ha, yieldTon:Number(yieldTon), treeAge, soilTexture, pOlsen, kSoil, mgSoil, caSoil, pWater, kWater, mgWater, caWater, nWater }));
     setCalc(true);
   }
 
-  const kHint  = kSoil>300  ? `⬆ >300 → K=0`  : kSoil<200  ? t.low : t.sufficient;
-  const mgHint = mgSoil>300 ? `⬆ >300 → Mg=0` : mgSoil<200 ? t.low : t.sufficient;
-  const pHint  = pOlsen>21  ? `⬆ >21 → P=0`   : pOlsen<11  ? t.low : t.sufficient;
-  const caHint = caSoil>6000? `⬆ → Ca=0`       : caSoil<3500? t.low : t.sufficient;
+  const thr    = SOIL_TEXTURES[soilTexture] || SOIL_TEXTURES.medium;
+  const kHint  = kSoil>thr.K_high  ? `⬆ >${thr.K_high} → K=0`  : kSoil<thr.K_low  ? t.low : t.sufficient;
+  const mgHint = mgSoil>thr.Mg_high? `⬆ >${thr.Mg_high} → Mg=0` : mgSoil<thr.Mg_low? t.low : t.sufficient;
+  const pHint  = pOlsen>thr.P_high ? `⬆ >${thr.P_high} → P=0`   : pOlsen<thr.P_low ? t.low : t.sufficient;
+  const caHint = caSoil>thr.Ca_high? `⬆ → Ca=0`                  : caSoil<thr.Ca_low? t.low : t.sufficient;
 
   return (
     <div style={{ minHeight:"100vh", background:C.darkGreen, fontFamily:"'Inter',-apple-system,BlinkMacSystemFont,sans-serif" }}>
@@ -383,6 +421,26 @@ function NutritionCalculator({ t, lang, setLang }) {
         </Section>
 
         <Section title={t.soilSection}>
+          {/* Soil texture dropdown */}
+          <div style={{ marginBottom:16 }}>
+            <label style={{ display:"block", fontSize:12, fontWeight:600, color:C.textMuted, marginBottom:6, letterSpacing:"0.04em", textTransform:"uppercase" }}>
+              {t.textureLabel}
+            </label>
+            <div style={{ display:"flex", gap:6 }}>
+              {["sandy","medium","clay"].map(tx => (
+                <button key={tx} onClick={() => setTexture(tx)} style={{
+                  flex:1, padding:"8px 4px", borderRadius:8, fontSize:11, fontWeight:700,
+                  border:`2px solid ${soilTexture===tx ? C.gold : C.creamDark}`,
+                  background: soilTexture===tx ? C.darkGreen : C.white,
+                  color: soilTexture===tx ? C.gold : C.textMuted,
+                  cursor:"pointer", transition:"all 0.15s",
+                }}>
+                  {tx==="sandy" ? t.textureSandy : tx==="medium" ? t.textureMedium : t.textureClay}
+                </button>
+              ))}
+            </div>
+
+          </div>
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"0 16px" }}>
             <Input label="P Olsen" unit="ppm" value={pOlsen} onChange={dirty(setPOlsen)} min={0} max={200}   step={0.5} hint={pHint}/>
             <Input label="K"       unit="ppm" value={kSoil}  onChange={dirty(setKSoil)}  min={0} max={2000}  step={5}   hint={kHint}/>
