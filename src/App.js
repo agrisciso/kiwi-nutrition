@@ -297,22 +297,78 @@ export default function App() {
 // ─── Google Sheet CSV ─────────────────────────────────────────────────────────
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSPDIpJvd9IsF0hHQd3D17wKa7pUPq2WVlj_7FVMS6op53OKE4HB6SqLKjX9ktmxme7eQdaeHKync9N/pub?gid=1277609134&single=true&output=csv";
 
+// Sand% & texture from Excel model (col F = Αμμος)
+const SAND_DATA = {
+  'Αρχιμανδρίτη Χριστίνα':        { sandPct: 18,   texture: 'clay' },
+  'Βίτσιος Σωτήριος 1':           { sandPct: 12,   texture: 'clay' },
+  'Βίτσιος Σωτήριος 2':           { sandPct: 18,   texture: 'clay' },
+  'Γαλιάνδρα Λαμπρινή':          { sandPct: 18,   texture: 'clay' },
+  'Γκούντας Μιχάλης':             { sandPct: 12,   texture: 'clay' },
+  'Δήμος Κωνσταντίνος':           { sandPct: 22,   texture: 'clay' },
+  'Ζαχαριά Αναστασία':            { sandPct: 16,   texture: 'clay' },
+  'Καλύβας Λάμπρος 1':            { sandPct: 18,   texture: 'clay' },
+  'Καλύβας Λάμπρος 2':            { sandPct: 24,   texture: 'clay' },
+  'Κολιός Αντρέας':               { sandPct: 18,   texture: 'clay' },
+  'Κώτση Βασιλική':               { sandPct: 20,   texture: 'clay' },
+  'Λάμπρου Χρισόστομος':          { sandPct: 20,   texture: 'clay' },
+  'Μαγκλάρας Γεώργιος':           { sandPct: 28,   texture: 'clay' },
+  'Μητσοκάλης Χρισόστομος 1':     { sandPct: 14,   texture: 'clay' },
+  'Μητσοκάλης Χρισόστομος 2':     { sandPct: 14,   texture: 'clay' },
+  'Μίχας Απόστολος':              { sandPct: 28,   texture: 'clay' },
+  'Μίχας Κωνσταντίνος':           { sandPct: 16,   texture: 'clay' },
+  'Μπαλλής Σωτήριος 1':           { sandPct: 19,   texture: 'clay' },
+  'Μπαλλής Σωτήριος 2':           { sandPct: 22,   texture: 'clay' },
+  'Μπαλλής Σωτήριος 3':           { sandPct: 19,   texture: 'clay' },
+  'Μπάρκας Χρήστος':              { sandPct: 16.3, texture: 'clay' },
+  'Μπέκιος Φίλιππος 1':           { sandPct: 12,   texture: 'clay' },
+  'Μπέκιος Φίλιππος 2':           { sandPct: 12,   texture: 'clay' },
+  'Μπέλλου Λαμπρινή':             { sandPct: 20,   texture: 'clay' },
+  'Μπόκου Μάρθα (1)':             { sandPct: 24,   texture: 'clay' },
+  'Μπόκου Μάρθα (2)':             { sandPct: 20,   texture: 'clay' },
+  'Ντέμσιας Θεόδωρος':            { sandPct: 12,   texture: 'clay' },
+  'Ξυλογιάννη Ευανθία':           { sandPct: 20,   texture: 'clay' },
+  'Ξυλογιάννη Μυρσίνη (1)':       { sandPct: 22,   texture: 'clay' },
+  'Ξυλογιάννη Μυρσίνη (2)':       { sandPct: 18,   texture: 'clay' },
+  'Ξυλογιάννης Αναστασιος (1)':   { sandPct: 20,   texture: 'clay' },
+  'Ξυλογιάννης Αναστασιος (2)':   { sandPct: 24,   texture: 'clay' },
+  'Ξυλογιάννης Αναστασιος (3)':   { sandPct: 12,   texture: 'clay' },
+  'Παντιώρα Αμαλία':              { sandPct: 14,   texture: 'clay' },
+  'Παππάς Ιωάννης':               { sandPct: 24,   texture: 'clay' },
+  'Παππάς Λάμπρος':               { sandPct: 28,   texture: 'clay' },
+  'Παππάς Μιχάλης':               { sandPct: 26,   texture: 'clay' },
+  'Σακαγιάννη Ηρώ':               { sandPct: 22,   texture: 'clay' },
+  'Σκούμας Χρήστος':              { sandPct: 14,   texture: 'clay' },
+  'Τζιανούμη Νίκη':               { sandPct: 30,   texture: 'medium' },
+  'Τσάκωνας Άρης (compulife)':    { sandPct: 28,   texture: 'clay' },
+  'Τσάλλος Λάμπρος':              { sandPct: 18,   texture: 'clay' },
+  'Τσάμη Αγλαία':                 { sandPct: 14,   texture: 'clay' },
+  'Τσώλας Διονύσης':              { sandPct: 30,   texture: 'medium' },
+  'Τσώλας Ιωάννης 1':             { sandPct: 20,   texture: 'clay' },
+  'Τσώλας Ιωάννης 2':             { sandPct: 20,   texture: 'clay' },
+  'Τσώρος Γεώργιος':              { sandPct: 32,   texture: 'medium' },
+  'Φερεντίνου Μαρία':             { sandPct: 32,   texture: 'medium' },
+  'Φωτιάδης Ορέστης':             { sandPct: 18,   texture: 'clay' },
+  'Ψιλογιαννόπουλος Χρήστος':     { sandPct: 12,   texture: 'clay' },
+};
+
 function parseCSV(text) {
   const lines = text.trim().split('\n');
-  const hdr = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+  const rawHdr = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
   return lines.slice(1).map(line => {
     const vals = [];
     let cur = '', inQ = false;
-    for (const ch of line) {
+    for (const ch of line + ',') {
       if (ch === '"') inQ = !inQ;
-      else if (ch === ',' && !inQ) { vals.push(cur.trim()); cur = ''; }
+      else if (ch === ',' && !inQ) { vals.push(cur.trim().replace(/^"|"$/g, '')); cur = ''; }
       else cur += ch;
     }
-    vals.push(cur.trim());
     const row = {};
-    hdr.forEach((h, i) => { row[h] = (vals[i] || '').replace(/^"|"$/g, ''); });
+    rawHdr.forEach((h, i) => {
+      row[h] = vals[i] ?? '';
+      row[h.toLowerCase()] = vals[i] ?? '';
+    });
     return row;
-  }).filter(r => r['ΟΝΟΜΑΤΕΠΩΝΥΜΟ'] && r['ΟΝΟΜΑΤΕΠΩΝΥΜΟ'].trim());
+  }).filter(r => (r['ΟΝΟΜΑΤΕΠΩΝΥΜΟ'] || '').trim());
 }
 
 // ─── Persist inputs to localStorage ─────────────────────────────────────────
@@ -360,29 +416,33 @@ function NutritionCalculator({ t, lang, setLang }) {
   }, []);
 
   function loadProducer(name) {
-    const row = producers.find(r => r['ΟΝΟΜΑΤΕΠΩΝΥΜΟ'] === name);
+    const row = producers.find(r => (r['ΟΝΟΜΑΤΕΠΩΝΥΜΟ'] || '').trim() === name.trim());
     if (!row) return;
     const pf = k => { const v = parseFloat(row[k]); return isNaN(v) ? null : v; };
     const haVal = pf('HA') || ha;
-    const estTn = row['ΕΚΤΙΜΗΣΗ_tn'];
-    const yldRaw = (estTn && haVal) ? parseFloat(estTn) / haVal : null;
-    const plantYr = parseInt(row['ΕΤΟΣ_ΦΥΤΕΥΣΗΣ']) || null;
+    const estTn = parseFloat(row['ΕΚΤΙΜΗΣΗ ΠΑΡΑΓΩΓΗΣ']);
+    const yldRaw = (!isNaN(estTn) && haVal) ? estTn / haVal : null;
+    const plantYr = parseInt(row['ΕΤΟΣ ΦΥΤΕΥΣΗΣ']) || null;
     const ageVal = plantYr ? new Date().getFullYear() - plantYr : treeAge;
-    const sandPct = pf('ΑΜΜΟΣ') ?? pf('ΑΜΜΟΣ_%') ?? pf('SAND_PCT') ?? pf('SAND') ?? pf('%ΑΜΜΟΣ');
-    const texVal = sandPct !== null ? (sandPct >= 60 ? 'sandy' : sandPct < 30 ? 'clay' : 'medium') : soilTexture;
+    // Sand% from CSV first, fallback to SAND_DATA
+    const sandPct = pf('Αμμος') ?? pf('αμμος') ?? pf('ΑΜΜΟΣ') ?? pf('Ammos') ?? pf('Sand');
+    const sandData = SAND_DATA[name.trim()];
+    const texVal = sandPct !== null
+      ? (sandPct >= 60 ? 'sandy' : sandPct < 30 ? 'clay' : 'medium')
+      : (sandData ? sandData.texture : soilTexture);
     setHa(haVal);
     if (yldRaw && yldRaw > 0) setYield(String(Math.round(yldRaw * 10) / 10));
     setTreeAge(ageVal);
     setSoilTexture(texVal);
-    if (pf('P_OLSEN') !== null) setPOlsen(pf('P_OLSEN'));
-    if (pf('K_ΕΔΑΦ')  !== null) setKSoil(pf('K_ΕΔΑΦ'));
-    if (pf('MG_ΕΔΑΦ') !== null) setMgSoil(pf('MG_ΕΔΑΦ'));
-    if (pf('CA_ΕΔΑΦ') !== null) setCaSoil(pf('CA_ΕΔΑΦ'));
-    if (pf('K_ΝΕΡΟ')  !== null) setKWater(pf('K_ΝΕΡΟ'));
-    if (pf('MG_ΝΕΡΟ') !== null) setMgWater(pf('MG_ΝΕΡΟ'));
-    if (pf('CA_ΝΕΡΟ') !== null) setCaWater(pf('CA_ΝΕΡΟ'));
-    if (pf('N_ΝΕΡΟ')  !== null) setNWater(pf('N_ΝΕΡΟ'));
-    if (pf('P_ΝΕΡΟ')  !== null) setPWater(pf('P_ΝΕΡΟ'));
+    if (pf('P Olsen')        !== null) setPOlsen(pf('P Olsen'));
+    if (pf('K')              !== null) setKSoil(pf('K'));
+    if (pf('Mg')             !== null) setMgSoil(pf('Mg'));
+    if (pf('Ca')             !== null) setCaSoil(pf('Ca'));
+    if (pf('K (mg/L) νερό') !== null) setKWater(pf('K (mg/L) νερό'));
+    if (pf('Mg (mg/L)')      !== null) setMgWater(pf('Mg (mg/L)'));
+    if (pf('Ca (mg/L)')      !== null) setCaWater(pf('Ca (mg/L)'));
+    if (pf('ΝΝΟ3 (mg/L)')   !== null) setNWater(pf('ΝΝΟ3 (mg/L)'));
+    if (pf('P (mg/L)')       !== null) setPWater(pf('P (mg/L)'));
     setSelectedProducer(name);
     setCalc(false);
     setResults(null);
