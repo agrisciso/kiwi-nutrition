@@ -11,46 +11,58 @@ const C = {
 
 // ─── Auth via Supabase ───────────────────────────────────────────────────────
 
-// ─── Soil texture thresholds (Xiloyannis et al.) ─────────────────────────────
+// ─── Soil texture thresholds — same as kiwi-fields THRX ──────────────────────
 const SOIL_TEXTURES = {
-  sandy:  { P_low:7,  P_high:11, K_low:70,  K_high:120, Ca_low:800,  Ca_high:1500, Mg_low:70,  Mg_high:120 },
-  medium: { P_low:9,  P_high:17, K_low:100, K_high:200, Ca_low:1500, Ca_high:3500, Mg_low:100, Mg_high:150 },
-  clay:   { P_low:11, P_high:21, K_low:150, K_high:300, Ca_low:3000, Ca_high:6000, Mg_low:150, Mg_high:300 },
+  sandy:  { P_low:7,  P_high:11, K_low:70,  K_high:120, Ca_low:800,  Ca_high:1500, Mg_low:70,  Mg_high:120, OM_low:0.8, OM_high:1.5 },
+  medium: { P_low:9,  P_high:17, K_low:100, K_high:200, Ca_low:1500, Ca_high:3500, Mg_low:100, Mg_high:180, OM_low:1.5, OM_high:2.0 },
+  clay:   { P_low:11, P_high:21, K_low:150, K_high:300, Ca_low:3000, Ca_high:6000, Mg_low:150, Mg_high:300, OM_low:2.0, OM_high:2.5 },
 };
 
-// ─── EXACT Excel formulas ────────────────────────────────────────────────────
+// ─── Formulas — ίδια λογική με kiwi-fields audit ─────────────────────────────
 function calcNutrition({ ha, yieldTon: y, treeAge, soilTexture = "medium", pOlsen, kSoil, mgSoil, caSoil, pWater, kWater, mgWater, caWater, nWater }) {
   const irr = ha * 4000;
   const thr = SOIL_TEXTURES[soilTexture] || SOIL_TEXTURES.medium;
 
-  // P — threshold depends on soil texture
-  let P;
-  if (pOlsen > thr.P_high)      P = 0;
-  else if (pOlsen < thr.P_low)  P = Math.max((y * 10) / 37.5, 0);
-  else                           P = Math.max(((y * 10) / 37.5 - (pWater * irr) / 1000) * ha, 0);
+  // N — σταθερή βάση 120 kg/ha ώριμα / 80 kg/ha νεαρά (<3 ετών), αφαίρεση νερού
+  const N = treeAge < 3
+    ? Math.max((80  - (nWater * irr) / 1000) * ha, 0)
+    : Math.max((120 - (nWater * irr) / 1000) * ha, 0);
+
+  // P — αφαίρεση νερού + ×1.25 boost αν κάτω από χαμηλό όριο
+  let P = 0;
+  if (pOlsen <= thr.P_high) {
+    P = Math.max(((y * 10) / 37.5 - (pWater * irr) / 1000) * ha, 0);
+    if (pOlsen < thr.P_low) P *= 1.25;
+  }
 
   // K
-  let K;
-  if (kSoil > thr.K_high)      K = 0;
-  else if (kSoil < thr.K_low)  K = Math.max((y * 74) / 37.5, 0);
-  else                          K = Math.max(((y * 74) / 37.5 - (kWater * irr) / 1000) * ha, 0);
-
-  // Ca
-  let Ca;
-  if (caSoil > thr.Ca_high)      Ca = 0;
-  else if (caSoil < thr.Ca_low)  Ca = (40 * 11) / 37.5;
-  else                            Ca = Math.max(((y * 11) / 37.5 - (caWater * irr) / 1000) * ha, 0);
+  let K_base = 0;
+  if (kSoil <= thr.K_high) {
+    K_base = Math.max(((y * 74) / 37.5 - (kWater * irr) / 1000) * ha, 0);
+    if (kSoil < thr.K_low) K_base *= 1.25;
+  }
 
   // Mg
-  let Mg;
-  if (mgSoil > thr.Mg_high)      Mg = 0;
-  else if (mgSoil < thr.Mg_low)  Mg = Math.max((y * 5) / 37.5, 0);
-  else                            Mg = Math.max(((y * 5) / 37.5 - (mgWater * irr) / 1000) * ha, 0);
+  let Mg_base = 0;
+  if (mgSoil <= thr.Mg_high) {
+    Mg_base = Math.max(((y * 5) / 37.5 - (mgWater * irr) / 1000) * ha, 0);
+    if (mgSoil < thr.Mg_low) Mg_base *= 1.25;
+  }
 
-  // N
-  let N;
-  if (treeAge < 4) N = ((25 * 120) / 37.5 - (nWater * irr) / 1000) * ha;
-  else             N = Math.max(((y * 120) / 37.5 - (nWater * irr) / 1000) * ha, 0);
+  // Ca — σταθερή 60 × ha αν κάτω από χαμηλό (>=2 ετών), αλλιώς yield-based
+  let Ca = 0;
+  if (caSoil <= thr.Ca_high) {
+    if (caSoil < thr.Ca_low) {
+      Ca = treeAge >= 2 ? 60 * ha : Math.max(((y * 11) / 37.5 - (caWater * irr) / 1000) * ha, 0);
+    } else {
+      Ca = Math.max(((y * 11) / 37.5 - (caWater * irr) / 1000) * ha, 0);
+    }
+  }
+
+  // Ανταγωνισμός / ισορροπία — ίδια με kiwi-fields
+  let K = K_base * (mgSoil > thr.Mg_high ? 1.25 : 1);
+  let Mg = Mg_base * (kSoil > thr.K_high ? 1.25 : 1);
+  if (caSoil > thr.Ca_high) { K *= 1.25; Mg *= 1.25; P *= 1.25; }
 
   return { N, K, P, Ca, Mg };
 }
@@ -64,7 +76,7 @@ const LANGS = {
     waterSection:"💧 Ανάλυση Νερού", resultsSection:"📋 Πρόγραμμα Θρέψης",
     hectares:"Εκτάρια", yieldLabel:"Εκτίμηση Παραγωγής", ageLabel:"Ηλικία Δένδρων",
     unitHa:"ha", unitTon:"tn/ha", unitYears:"έτη",
-    totalProd:"Σύνολο παραγωγής", tons:"τόνοι", youngTree:"⚠ Νεαρό δένδρο (<4 ετών)",
+    totalProd:"Σύνολο παραγωγής", tons:"τόνοι", youngTree:"⚠ Νεαρό δένδρο (<3 ετών)",
     low:"⬇ χαμηλό", sufficient:"✓ επαρκές", high:"⬆ υψηλό",
     perField:"kg / χωράφι", adequate:"Επαρκές — δεν απαιτείται",
     calcBtn:"Υπολογισμός", enterYield:"Εισάγετε εκτίμηση παραγωγής για υπολογισμό",
@@ -92,7 +104,7 @@ const LANGS = {
     waterSection:"💧 Water Analysis", resultsSection:"📋 Nutrition Programme",
     hectares:"Hectares", yieldLabel:"Estimated Yield", ageLabel:"Tree Age",
     unitHa:"ha", unitTon:"tn/ha", unitYears:"years",
-    totalProd:"Total production", tons:"tons", youngTree:"⚠ Young tree (<4 years)",
+    totalProd:"Total production", tons:"tons", youngTree:"⚠ Young tree (<3 years)",
     low:"⬇ low", sufficient:"✓ sufficient", high:"⬆ high",
     perField:"kg / field", adequate:"Adequate — not required",
     calcBtn:"Calculate", enterYield:"Enter estimated yield to calculate",
@@ -119,7 +131,7 @@ const LANGS = {
     waterSection:"💧 Analisi Acqua", resultsSection:"📋 Piano Nutrizionale",
     hectares:"Ettari", yieldLabel:"Produzione Stimata", ageLabel:"Età Piante",
     unitHa:"ha", unitTon:"t/ha", unitYears:"anni",
-    totalProd:"Produzione totale", tons:"tonnellate", youngTree:"⚠ Pianta giovane (<4 anni)",
+    totalProd:"Produzione totale", tons:"tonnellate", youngTree:"⚠ Pianta giovane (<3 anni)",
     low:"⬇ basso", sufficient:"✓ sufficiente", high:"⬆ alto",
     perField:"kg / campo", adequate:"Sufficiente — non necessario",
     calcBtn:"Calcola", enterYield:"Inserire produzione stimata per calcolare",
@@ -146,7 +158,7 @@ const LANGS = {
     waterSection:"💧 Análisis de Agua", resultsSection:"📋 Programa de Nutrición",
     hectares:"Hectáreas", yieldLabel:"Producción Estimada", ageLabel:"Edad Árboles",
     unitHa:"ha", unitTon:"t/ha", unitYears:"años",
-    totalProd:"Producción total", tons:"toneladas", youngTree:"⚠ Árbol joven (<4 años)",
+    totalProd:"Producción total", tons:"toneladas", youngTree:"⚠ Árbol joven (<3 años)",
     low:"⬇ bajo", sufficient:"✓ suficiente", high:"⬆ alto",
     perField:"kg / campo", adequate:"Suficiente — no requerido",
     calcBtn:"Calcular", enterYield:"Introduzca producción estimada para calcular",
@@ -380,7 +392,7 @@ function NutritionCalculator({ t, lang, setLang }) {
           {hasYield && (
             <div style={{ fontSize:12, color:C.textMuted, padding:"8px 12px", background:`${C.gold}15`, borderRadius:8, marginTop:4 }}>
               📊 {t.totalProd}: <strong style={{ color:C.darkGreen }}>{(Number(yieldTon)*ha).toFixed(1)} {t.tons}</strong>
-              {treeAge<4 && <span style={{ color:C.orange, marginLeft:8 }}>{t.youngTree}</span>}
+              {treeAge<3 && <span style={{ color:C.orange, marginLeft:8 }}>{t.youngTree}</span>}
             </div>
           )}
         </Section>
