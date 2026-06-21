@@ -23,8 +23,8 @@ function calcNutrition({ ha, yieldTon: y, treeAge, soilTexture = "medium", pOlse
   const irr = ha * 4000;
   const thr = SOIL_TEXTURES[soilTexture] || SOIL_TEXTURES.medium;
 
-  // N — σταθερή βάση 120 kg/ha ώριμα / 80 kg/ha νεαρά (<3 ετών), αφαίρεση νερού
-  const N = treeAge < 3
+  // N — σταθερή βάση 120 kg/ha ώριμα / 80 kg/ha νεαρά (<2 ετών), αφαίρεση νερού
+  const N = treeAge < 2
     ? Math.max((80  - (nWater * irr) / 1000) * ha, 0)
     : Math.max((120 - (nWater * irr) / 1000) * ha, 0);
 
@@ -76,7 +76,7 @@ const LANGS = {
     waterSection:"💧 Ανάλυση Νερού", resultsSection:"📋 Πρόγραμμα Θρέψης",
     hectares:"Εκτάρια", yieldLabel:"Εκτίμηση Παραγωγής", ageLabel:"Ηλικία Δένδρων",
     unitHa:"ha", unitTon:"tn/ha", unitYears:"έτη",
-    totalProd:"Σύνολο παραγωγής", tons:"τόνοι", youngTree:"⚠ Νεαρό δένδρο (<3 ετών)",
+    totalProd:"Σύνολο παραγωγής", tons:"τόνοι", youngTree:"⚠ Νεαρό δένδρο (<2 ετών)",
     low:"⬇ χαμηλό", sufficient:"✓ επαρκές", high:"⬆ υψηλό",
     perField:"kg / χωράφι", adequate:"Επαρκές — δεν απαιτείται",
     calcBtn:"Υπολογισμός", enterYield:"Εισάγετε εκτίμηση παραγωγής για υπολογισμό",
@@ -104,7 +104,7 @@ const LANGS = {
     waterSection:"💧 Water Analysis", resultsSection:"📋 Nutrition Programme",
     hectares:"Hectares", yieldLabel:"Estimated Yield", ageLabel:"Tree Age",
     unitHa:"ha", unitTon:"tn/ha", unitYears:"years",
-    totalProd:"Total production", tons:"tons", youngTree:"⚠ Young tree (<3 years)",
+    totalProd:"Total production", tons:"tons", youngTree:"⚠ Young tree (<2 years)",
     low:"⬇ low", sufficient:"✓ sufficient", high:"⬆ high",
     perField:"kg / field", adequate:"Adequate — not required",
     calcBtn:"Calculate", enterYield:"Enter estimated yield to calculate",
@@ -131,7 +131,7 @@ const LANGS = {
     waterSection:"💧 Analisi Acqua", resultsSection:"📋 Piano Nutrizionale",
     hectares:"Ettari", yieldLabel:"Produzione Stimata", ageLabel:"Età Piante",
     unitHa:"ha", unitTon:"t/ha", unitYears:"anni",
-    totalProd:"Produzione totale", tons:"tonnellate", youngTree:"⚠ Pianta giovane (<3 anni)",
+    totalProd:"Produzione totale", tons:"tonnellate", youngTree:"⚠ Pianta giovane (<2 anni)",
     low:"⬇ basso", sufficient:"✓ sufficiente", high:"⬆ alto",
     perField:"kg / campo", adequate:"Sufficiente — non necessario",
     calcBtn:"Calcola", enterYield:"Inserire produzione stimata per calcolare",
@@ -158,7 +158,7 @@ const LANGS = {
     waterSection:"💧 Análisis de Agua", resultsSection:"📋 Programa de Nutrición",
     hectares:"Hectáreas", yieldLabel:"Producción Estimada", ageLabel:"Edad Árboles",
     unitHa:"ha", unitTon:"t/ha", unitYears:"años",
-    totalProd:"Producción total", tons:"toneladas", youngTree:"⚠ Árbol joven (<3 años)",
+    totalProd:"Producción total", tons:"toneladas", youngTree:"⚠ Árbol joven (<2 años)",
     low:"⬇ bajo", sufficient:"✓ suficiente", high:"⬆ alto",
     perField:"kg / campo", adequate:"Suficiente — no requerido",
     calcBtn:"Calcular", enterYield:"Introduzca producción estimada para calcular",
@@ -534,7 +534,7 @@ function NutritionCalculator({ t, lang, setLang }) {
           {hasYield && (
             <div style={{ fontSize:12, color:C.textMuted, padding:"8px 12px", background:`${C.gold}15`, borderRadius:8, marginTop:4 }}>
               📊 {t.totalProd}: <strong style={{ color:C.darkGreen }}>{(Number(yieldTon)*ha).toFixed(1)} {t.tons}</strong>
-              {treeAge<3 && <span style={{ color:C.orange, marginLeft:8 }}>{t.youngTree}</span>}
+              {treeAge<2 && <span style={{ color:C.orange, marginLeft:8 }}>{t.youngTree}</span>}
             </div>
           )}
         </Section>
