@@ -404,50 +404,6 @@ function NutritionCalculator({ t, lang, setLang }) {
   const [results,  setResults] = useState(null);
   const [calculated, setCalc]  = useState(false);
 
-  // Google Sheet producers
-  const [producers, setProducers] = useState([]);
-  const [selectedProducer, setSelectedProducer] = useState('');
-
-  useEffect(() => {
-    fetch(CSV_URL)
-      .then(r => r.text())
-      .then(text => setProducers(parseCSV(text)))
-      .catch(() => {});
-  }, []);
-
-  function loadProducer(name) {
-    const row = producers.find(r => (r['ΟΝΟΜΑΤΕΠΩΝΥΜΟ'] || '').trim() === name.trim());
-    if (!row) return;
-    const pf = k => { const v = parseFloat(row[k]); return isNaN(v) ? null : v; };
-    const haVal = pf('HA') || ha;
-    const estTn = parseFloat(row['ΕΚΤΙΜΗΣΗ ΠΑΡΑΓΩΓΗΣ']);
-    const yldRaw = (!isNaN(estTn) && haVal) ? estTn / haVal : null;
-    const plantYr = parseInt(row['ΕΤΟΣ ΦΥΤΕΥΣΗΣ']) || null;
-    const ageVal = plantYr ? new Date().getFullYear() - plantYr : treeAge;
-    // Sand% from CSV first, fallback to SAND_DATA
-    const sandPct = pf('Αμμος') ?? pf('αμμος') ?? pf('ΑΜΜΟΣ') ?? pf('Ammos') ?? pf('Sand');
-    const sandData = SAND_DATA[name.trim()];
-    const texVal = sandPct !== null
-      ? (sandPct >= 60 ? 'sandy' : sandPct < 30 ? 'clay' : 'medium')
-      : (sandData ? sandData.texture : soilTexture);
-    setHa(haVal);
-    if (yldRaw && yldRaw > 0) setYield(String(Math.round(yldRaw * 10) / 10));
-    setTreeAge(ageVal);
-    setSoilTexture(texVal);
-    if (pf('P Olsen')        !== null) setPOlsen(pf('P Olsen'));
-    if (pf('K')              !== null) setKSoil(pf('K'));
-    if (pf('Mg')             !== null) setMgSoil(pf('Mg'));
-    if (pf('Ca')             !== null) setCaSoil(pf('Ca'));
-    if (pf('K (mg/L) νερό') !== null) setKWater(pf('K (mg/L) νερό'));
-    if (pf('Mg (mg/L)')      !== null) setMgWater(pf('Mg (mg/L)'));
-    if (pf('Ca (mg/L)')      !== null) setCaWater(pf('Ca (mg/L)'));
-    if (pf('ΝΝΟ3 (mg/L)')   !== null) setNWater(pf('ΝΝΟ3 (mg/L)'));
-    if (pf('P (mg/L)')       !== null) setPWater(pf('P (mg/L)'));
-    setSelectedProducer(name);
-    setCalc(false);
-    setResults(null);
-  }
-
   // Save inputs whenever they change
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const hasYield = yieldTon !== "" && Number(yieldTon) > 0;
@@ -503,27 +459,6 @@ function NutritionCalculator({ t, lang, setLang }) {
 
       {/* Body */}
       <div style={{ background:C.cream, minHeight:"calc(100vh - 130px)", borderRadius:"20px 20px 0 0", padding:"20px 16px 40px", maxWidth:480, margin:"0 auto" }}>
-
-        {/* Producer selector from Google Sheet */}
-        {producers.length > 0 && (
-          <div style={{ marginBottom:14, padding:"10px 14px", background:`${C.gold}18`, borderRadius:12, border:`1px solid ${C.gold}44` }}>
-            <div style={{ fontSize:10, fontWeight:700, color:C.gold, textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:8 }}>
-              📋 {lang==="el"?"Φόρτωση από Google Sheet":lang==="en"?"Load from Google Sheet":lang==="it"?"Carica da Google Sheet":"Cargar desde Google Sheet"}
-            </div>
-            <select
-              value={selectedProducer}
-              onChange={e => loadProducer(e.target.value)}
-              style={{ width:"100%", padding:"9px 12px", borderRadius:8, border:`1.5px solid ${C.creamDark}`, background:C.white, color:C.text, fontSize:13, fontWeight:500, outline:"none" }}
-            >
-              <option value="">{lang==="el"?"— Επιλογή παραγωγού —":lang==="en"?"— Select producer —":lang==="it"?"— Seleziona produttore —":"— Seleccionar productor —"}</option>
-              {producers.map(p => (
-                <option key={p['ΟΝΟΜΑΤΕΠΩΝΥΜΟ']} value={p['ΟΝΟΜΑΤΕΠΩΝΥΜΟ']}>
-                  {p['ΟΝΟΜΑΤΕΠΩΝΥΜΟ']}{p['ΠΕΡΙΟΧΗ'] ? ` · ${p['ΠΕΡΙΟΧΗ']}` : ''}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
 
         <Section title={t.fieldSection}>
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"0 16px" }}>
